@@ -34,7 +34,7 @@ namespace PracticeMod
 			int i = 0;
 			if (pointer == i) str.Append("> "); else str.Append("  ");
 			str.AppendLine("[Infected Speed]");
-			
+
 			i++;
 			if (pointer == i) str.Append("> "); else str.Append("  ");
 			str.AppendLine("[Survivor Speed]");
