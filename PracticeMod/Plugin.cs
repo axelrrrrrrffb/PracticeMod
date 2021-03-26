@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using BepInEx;
 using Bepinject;
 using Utilla;
@@ -9,8 +8,6 @@ using HarmonyLib;
 using System.Reflection;
 using UnityEngine;
 using UnityEngine.XR;
-using System.Net;
-using System.Net.Http;
 
 namespace PracticeMod
 {
@@ -21,7 +18,7 @@ namespace PracticeMod
 	{
 		static bool inPrivate;
 		static bool modEnabled;
-		static bool Alone => PhotonNetwork.InRoom ? PhotonNetwork.CurrentRoom?.PlayerCount == 1 : false;
+		static bool Alone => PhotonNetwork.InRoom && PhotonNetwork.CurrentRoom?.PlayerCount == 1;
 		static bool Allowed => Alone && inPrivate;
 
 		static Harmony harmony;
@@ -40,7 +37,7 @@ namespace PracticeMod
 		void Awake()
 		{
 			Zenjector.Install<MainInstaller>().OnProject();
-			Utilla.Events.RoomJoined += RoomJoined;
+			Events.RoomJoined += RoomJoined;
 
 			harmony = new Harmony(PluginInfo.GUID);
 			if (!modEnabled)
@@ -55,18 +52,15 @@ namespace PracticeMod
 			if (Allowed && isPatched)
 			{
 				List<InputDevice> list = new List<InputDevice>();
-				InputDevices.GetDevicesWithCharacteristics(UnityEngine.XR.InputDeviceCharacteristics.HeldInHand | UnityEngine.XR.InputDeviceCharacteristics.Right | UnityEngine.XR.InputDeviceCharacteristics.Controller, list);
+				InputDevices.GetDevicesWithCharacteristics(InputDeviceCharacteristics.HeldInHand | InputDeviceCharacteristics.Right | InputDeviceCharacteristics.Controller, list);
 				rightHand = list[0];
 
 				list = new List<InputDevice>();
-				InputDevices.GetDevicesWithCharacteristics(UnityEngine.XR.InputDeviceCharacteristics.HeldInHand | UnityEngine.XR.InputDeviceCharacteristics.Left | UnityEngine.XR.InputDeviceCharacteristics.Controller, list);
+				InputDevices.GetDevicesWithCharacteristics(InputDeviceCharacteristics.HeldInHand | InputDeviceCharacteristics.Left | InputDeviceCharacteristics.Controller, list);
 				leftHand = list[0];
 
-				bool rPrimary;
-				bool lPrimary;
-
-				rightHand.TryGetFeatureValue(CommonUsages.primaryButton, out rPrimary);
-				leftHand.TryGetFeatureValue(CommonUsages.primaryButton, out lPrimary);
+                rightHand.TryGetFeatureValue(CommonUsages.primaryButton, out var rPrimary);
+				leftHand.TryGetFeatureValue(CommonUsages.primaryButton, out var lPrimary);
 
 				if (rPrimary && !previousRPrimary)
 				{
