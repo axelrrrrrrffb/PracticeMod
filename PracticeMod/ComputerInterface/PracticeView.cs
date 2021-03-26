@@ -21,8 +21,8 @@ namespace PracticeMod
             _selectionHandler.MaxIdx = 1;
 			// when the "selection" key is pressed (we set it to enter above)
 			_selectionHandler.OnSelected += OnEntrySelected;
-			// since you quite often want to have and indicator of the selected item
-			// I added helper functions for that.
+			// since you quite often want to have an indicator of the selected item
+			// I added helper function for that.
 			// Basically you specify the prefix and suffix added to the selected item
 			// and an prefix and suffix if the item isn't selected
 			_selectionHandler.ConfigureSelectionIndicator("> ", "", "  ", "");
