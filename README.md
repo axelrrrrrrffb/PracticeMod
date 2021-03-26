@@ -4,7 +4,11 @@ Requires [ComputerInterface](https://github.com/ToniMacaroni/ComputerInterface) 
 
 Features:
 * Set speed to infected or survivor
+
 ![Menu selection](Gifs/speed.gif)
+
 * Set checkpoints using the A and X buttons
+
 ![Checkpoints](Gifs/checkpoint.gif)
+
 * Functionality can be toggled using the computer
