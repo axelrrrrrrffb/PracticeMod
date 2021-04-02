@@ -59,7 +59,7 @@ namespace PracticeMod
 				InputDevices.GetDevicesWithCharacteristics(InputDeviceCharacteristics.HeldInHand | InputDeviceCharacteristics.Left | InputDeviceCharacteristics.Controller, list);
 				leftHand = list[0];
 
-                rightHand.TryGetFeatureValue(CommonUsages.primaryButton, out var rPrimary);
+				rightHand.TryGetFeatureValue(CommonUsages.primaryButton, out var rPrimary);
 				leftHand.TryGetFeatureValue(CommonUsages.primaryButton, out var lPrimary);
 
 				if (rPrimary && !previousRPrimary)
