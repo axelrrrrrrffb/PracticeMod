@@ -3,12 +3,12 @@ Gorilla Tag mod for practicing alone. **Only works in private matches where you 
 Requires [ComputerInterface](https://github.com/ToniMacaroni/ComputerInterface) (1.4.0+) and [Utilla](https://github.com/legoandmars/Utilla) (1.3.0+)
 
 Features:
-* Set speed to infected or survivor
+* Simulate being a tagger or survivor with specific amounts of players tagged
 
-![Menu selection](Gifs/speed.gif)
+![The menu](Media/mainmenu.png)
 
 * Set checkpoints using the A and X buttons
 
-![Checkpoints](Gifs/checkpoint.gif)
+![Checkpoints](Media/checkpoint.gif)
 
 * Functionality can be toggled using the computer
