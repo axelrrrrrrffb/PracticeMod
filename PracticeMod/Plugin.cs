@@ -144,6 +144,26 @@ namespace PracticeMod
 			}
 		}
 
+		public static void SetSpecificSpeed(int playerCount, int infectedCount, bool infected)
+		{
+			if (Allowed)
+			{
+				float percentage = infected ? (playerCount - infectedCount) : (infectedCount - 1) * 0.9f;
+				percentage /= (float)(playerCount - 1);
+
+				float fastJumpMultiplier = GorillaTagManager.instance.fastJumpMultiplier;
+				float slowJumpMultiplier = GorillaTagManager.instance.slowJumpMultiplier;
+				float fastJumpLimit = GorillaTagManager.instance.fastJumpLimit;
+				float slowJumpLimit = GorillaTagManager.instance.slowJumpLimit;
+
+				float computedJumpMultiplier = (fastJumpMultiplier - slowJumpMultiplier) * percentage + slowJumpMultiplier;
+				float computedJumpLimit = (fastJumpLimit - slowJumpLimit) * percentage + slowJumpLimit;
+
+				Player.Instance.jumpMultiplier = computedJumpMultiplier;
+				Player.Instance.maxJumpSpeed = computedJumpLimit;
+			}
+		}
+
 		static void SetMat(int index)
 		{
 			ExitGames.Client.Photon.Hashtable hashtable = new ExitGames.Client.Photon.Hashtable();

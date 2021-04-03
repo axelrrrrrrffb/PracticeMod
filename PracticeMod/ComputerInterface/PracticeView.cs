@@ -3,32 +3,33 @@ using System.Collections.Generic;
 using System.Text;
 using ComputerInterface;
 using ComputerInterface.ViewLib;
+using GorillaLocomotion;
 
 namespace PracticeMod
 {
 	public class PracticeView : ComputerView
 	{
-		const string Header = "Practice Mod";
-		// const string Checkmark = "✔";
-		// const string Xmark = "✘";
+		const string highlightColor = "ffa500ff";
 
 		private readonly UISelectionHandler _selectionHandler;
+
+		int infectedPlayers = 1;
+		int totalPlayers = 10;
+		bool infected = true;
 
 		public PracticeView()
 		{
 			_selectionHandler = new UISelectionHandler(EKeyboardKey.Up, EKeyboardKey.Down, EKeyboardKey.Enter);
 			// the max zero indexed entry (2 entries - 1 since zero indexed)
-			_selectionHandler.MaxIdx = 1;
+			_selectionHandler.MaxIdx = 3;
 			// when the "selection" key is pressed (we set it to enter above)
 			_selectionHandler.OnSelected += OnEntrySelected;
 			// since you quite often want to have an indicator of the selected item
 			// I added helper function for that.
 			// Basically you specify the prefix and suffix added to the selected item
 			// and an prefix and suffix if the item isn't selected
-			_selectionHandler.ConfigureSelectionIndicator("> ", "", "  ", "");
+			_selectionHandler.ConfigureSelectionIndicator($"<color=#{highlightColor}>></color> ", "", "  ", "");
 		}
-
-		// This is called when you view is opened
 
 		public override void OnShow(object[] args)
 		{
@@ -45,25 +46,61 @@ namespace PracticeMod
 			// passes it via the specified callback function and sets the text at the end
 			SetText(str =>
 			{
-				str.AppendLine(Header);
-				str.Repeat("=", SCREEN_WIDTH).AppendLines(2);
+				str.BeginCenter();
+				str.MakeBar('-', SCREEN_WIDTH, 0, "ffffff10");
+				str.AppendClr("Practice Mod", highlightColor).EndColor().AppendLine();
+				str.AppendLine("By Graic");
+				str.MakeBar('-', SCREEN_WIDTH, 0, "ffffff10");
+				str.EndAlign().AppendLines(1);
+
+				str.AppendLine($"  Jump Multiplier: {Player.Instance.jumpMultiplier}");
+				str.AppendLine($"  Max Jump Speed: {Player.Instance.maxJumpSpeed}");
+				str.AppendLine();
 
 				// get the item with the prefix and suffix configured above
 				// see how this results in a lot less lines and logic
-				str.AppendLine(_selectionHandler.GetIndicatedText(0, "[Infected Speed]"));
-				str.AppendLine(_selectionHandler.GetIndicatedText(1, "[Survivor Speed]"));
+				str.AppendLine(_selectionHandler.GetIndicatedText(0, $"<color={(infected ? "#"+highlightColor: "white")}>[Infected]</color>"));
+				str.AppendLine(_selectionHandler.GetIndicatedText(1, $"<color={(!infected ? "#"+highlightColor: "white")}>[Survivor]</color>"));
+				str.AppendLine(_selectionHandler.GetIndicatedText(2, $"Infected Count: {infectedPlayers}"));
+				str.AppendLine(_selectionHandler.GetIndicatedText(3, $"Player Count: {totalPlayers}"));
+
+				str.AppendLine();
+				str.BeginColor("ffffff10").AppendLine("  ▲/▼ Select  Enter/◀/▶ Adjust").EndColor();
 			});
 		}
 
-		private void OnEntrySelected(int idx)
+		private void OnEntrySelected(int index)
 		{
-			switch (idx)
+			switch (index)
 			{
 				case 0: // Infected speed
+					infectedPlayers = 1;
+					totalPlayers = 10;
+					infected = true;
 					Plugin.SetInfectedSpeed();
 					break;
 				case 1: // Survivor speed
+					infectedPlayers = 1;
+					totalPlayers = 10;
+					infected = false;
 					Plugin.SetSurvivorSpeed();
+					break;
+			}
+		}
+
+		private void OnEntryAdjusted(int index, bool increase)
+		{
+			int offset = increase ? 1 : -1;
+			switch (index)
+			{
+				case 2:
+					infectedPlayers = UnityEngine.Mathf.Clamp(infectedPlayers + offset, 1, totalPlayers - 1);
+					Plugin.SetSpecificSpeed(totalPlayers, infectedPlayers, infected);
+					break;
+				case 3:
+					totalPlayers = UnityEngine.Mathf.Clamp(totalPlayers + offset, 2, 10);
+					infectedPlayers = UnityEngine.Mathf.Clamp(infectedPlayers, 1, totalPlayers - 1);
+					Plugin.SetSpecificSpeed(totalPlayers, infectedPlayers, infected);
 					break;
 			}
 		}
@@ -78,6 +115,13 @@ namespace PracticeMod
 			{
 				UpdateScreen();
 				return;
+			}
+			
+			// check if the pressed key is adjusting a setting
+			if (key == EKeyboardKey.Left || key == EKeyboardKey.Right)
+			{
+				OnEntryAdjusted(_selectionHandler.CurrentSelectionIndex, key == EKeyboardKey.Right);
+				UpdateScreen();
 			}
 
 			switch (key)
