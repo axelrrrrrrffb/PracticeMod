@@ -7,7 +7,7 @@ Features:
 
 ![The menu](Media/mainmenu.png)
 
-* Set checkpoints using the A and X buttons
+* Set a checkpoint using the X button, and teleport using the A button
 
 ![Checkpoints](Media/checkpoint.gif)
 
