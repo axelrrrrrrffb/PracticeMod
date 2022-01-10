@@ -4,6 +4,7 @@ using System.Text;
 using ComputerInterface;
 using ComputerInterface.ViewLib;
 using GorillaLocomotion;
+using PracticeMod.Patches;
 
 namespace PracticeMod
 {
@@ -53,20 +54,44 @@ namespace PracticeMod
 				str.MakeBar('-', SCREEN_WIDTH, 0, "ffffff10");
 				str.EndAlign().AppendLines(1);
 
-				str.AppendLine($"  Jump Multiplier: {Player.Instance.jumpMultiplier}");
-				str.AppendLine($"  Max Jump Speed: {Player.Instance.maxJumpSpeed}");
-				str.AppendLine();
-
-				// get the item with the prefix and suffix configured above
-				// see how this results in a lot less lines and logic
-				str.AppendLine(_selectionHandler.GetIndicatedText(0, $"<color={(infected ? "#"+highlightColor: "white")}>[Infected]</color>"));
-				str.AppendLine(_selectionHandler.GetIndicatedText(1, $"<color={(!infected ? "#"+highlightColor: "white")}>[Survivor]</color>"));
-				str.AppendLine(_selectionHandler.GetIndicatedText(2, $"Infected Count: {infectedPlayers}"));
-				str.AppendLine(_selectionHandler.GetIndicatedText(3, $"Player Count: {totalPlayers}"));
-
-				str.AppendLine();
-				str.BeginColor("ffffff10").AppendLine("  ▲/▼ Select  Enter/◀/▶ Adjust").EndColor();
+				if (Plugin.Allowed)
+				{
+					DrawBody(str);
+				} else
+				{
+					DrawDisabled(str);
+				}
 			});
+		}
+
+		void DrawDisabled(StringBuilder str)
+		{
+			str.AppendLine();
+			str.BeginCenter();
+			str.BeginColor("ff0000");
+			//str.AppendLine("You must be alone in a private");
+			//str.AppendLine("to use this mod!");
+			str.AppendLine("Join a private by yourself");
+			str.AppendLine("to begin practicing!");
+			str.EndColor();
+			str.EndAlign();
+		}
+
+		void DrawBody(StringBuilder str)
+		{
+			str.AppendLine($"  Jump Multiplier: {(MovementSpeedPatch.ShouldOverride ? MovementSpeedPatch.OverrideJumpMultiplier : Player.Instance.jumpMultiplier):F2}");
+			str.AppendLine($"  Max Jump Speed: {(MovementSpeedPatch.ShouldOverride ? MovementSpeedPatch.OverrideMaxJumpSpeed : Player.Instance.maxJumpSpeed):F2}");
+			str.AppendLine();
+
+			// get the item with the prefix and suffix configured above
+			// see how this results in a lot less lines and logic
+			str.AppendLine(_selectionHandler.GetIndicatedText(0, $"<color={(infected ? "#"+highlightColor: "white")}>[Infected]</color>"));
+			str.AppendLine(_selectionHandler.GetIndicatedText(1, $"<color={(!infected ? "#"+highlightColor: "white")}>[Survivor]</color>"));
+			str.AppendLine(_selectionHandler.GetIndicatedText(2, $"Infected Count: {infectedPlayers}"));
+			str.AppendLine(_selectionHandler.GetIndicatedText(3, $"Player Count: {totalPlayers}"));
+
+			str.AppendLine();
+			str.BeginColor("ffffff10").AppendLine("  ▲/▼ Select  Enter/◀/▶ Adjust").EndColor();
 		}
 
 		private void OnEntrySelected(int index)
@@ -107,21 +132,24 @@ namespace PracticeMod
 
 		public override void OnKeyPressed(EKeyboardKey key)
 		{
-			// check if the pressed key is already handled
-			// by the selection handler (if yes returns true)
-			// don't check for other buttons if it's handled
-			// just update the screen
-			if (_selectionHandler.HandleKeypress(key))
+			if (Plugin.Allowed)
 			{
-				UpdateScreen();
-				return;
-			}
-			
-			// check if the pressed key is adjusting a setting
-			if (key == EKeyboardKey.Left || key == EKeyboardKey.Right)
-			{
-				OnEntryAdjusted(_selectionHandler.CurrentSelectionIndex, key == EKeyboardKey.Right);
-				UpdateScreen();
+				// check if the pressed key is already handled
+				// by the selection handler (if yes returns true)
+				// don't check for other buttons if it's handled
+				// just update the screen
+				if (_selectionHandler.HandleKeypress(key))
+				{
+					UpdateScreen();
+					return;
+				}
+				
+				// check if the pressed key is adjusting a setting
+				if (key == EKeyboardKey.Left || key == EKeyboardKey.Right)
+				{
+					OnEntryAdjusted(_selectionHandler.CurrentSelectionIndex, key == EKeyboardKey.Right);
+					UpdateScreen();
+				}
 			}
 
 			switch (key)

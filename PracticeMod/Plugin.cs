@@ -8,22 +8,21 @@ using HarmonyLib;
 using System.Reflection;
 using UnityEngine;
 using UnityEngine.XR;
+using PracticeMod.Patches;
 
 namespace PracticeMod
 {
 	[BepInPlugin(PluginInfo.GUID, PluginInfo.Name, PluginInfo.Version)]
-	[BepInDependency("org.legoandmars.gorillatag.utilla", "1.3.0")]
+	[BepInDependency("org.legoandmars.gorillatag.utilla", "1.5.0")]
 	[BepInDependency("tonimacaroni.computerinterface", "1.4.0")]
 	public class Plugin : BaseUnityPlugin
 	{
+		const int SurvivorMaterialIndex = 0;
+		const int InfectedMaterialIndex = 1;
+
 		static bool inPrivate;
-		static bool modEnabled;
 		static bool Alone => PhotonNetwork.InRoom && PhotonNetwork.CurrentRoom?.PlayerCount == 1;
-		static bool Allowed => Alone && inPrivate;
-
-		static Harmony harmony;
-
-		bool isPatched;
+		public static bool Allowed => inPrivate && Alone;
 
 		InputDevice rightHand;
 		InputDevice leftHand;
@@ -37,19 +36,24 @@ namespace PracticeMod
 		void Awake()
 		{
 			Zenjector.Install<MainInstaller>().OnProject();
-			Events.RoomJoined += RoomJoined;
+			Events.RoomJoined += OnRoomJoined;
+			Events.RoomLeft += OnRoomLeft;
+		}
 
-			harmony = new Harmony(PluginInfo.GUID);
-			if (!modEnabled)
-			{
-				OnEnable();
-			}
+		void OnEnable()
+		{
+			HarmonyPatches.ApplyHarmonyPatches();
+		}
+
+		void OnDisable()
+		{
+			HarmonyPatches.RemoveHarmonyPatches();
 		}
 
 		void Update()
 		{
 			if (!PhotonNetwork.InRoom) return;
-			if (Allowed && isPatched)
+			if (Allowed)
 			{
 				List<InputDevice> list = new List<InputDevice>();
 				InputDevices.GetDevicesWithCharacteristics(InputDeviceCharacteristics.HeldInHand | InputDeviceCharacteristics.Right | InputDeviceCharacteristics.Controller, list);
@@ -77,37 +81,15 @@ namespace PracticeMod
 			}
 		}
 
-		void OnEnable()
-		{
-			modEnabled = true;
-			ApplyPatches();
-		}
-
-		void OnDisable()
-		{
-			modEnabled = false;
-			RemovePatches();
-		}
-
-		void ApplyPatches()
-		{
-			if (isPatched) return;
-
-			harmony.PatchAll(Assembly.GetExecutingAssembly());
-			isPatched = true;
-		}
-
-		void RemovePatches()
-		{
-			if (!isPatched) return;
-
-			harmony.PatchAll(Assembly.GetExecutingAssembly());
-			isPatched = false;
-		}
-
-		void RoomJoined(object sender, Events.RoomJoinedArgs e)
+		void OnRoomJoined(object sender, Events.RoomJoinedArgs e)
 		{
 			inPrivate = e.isPrivate;
+		}
+
+		void OnRoomLeft(object sender, Events.RoomJoinedArgs e)
+		{
+			MovementSpeedPatch.ResetSpeed();
+			MaterialIndexPatch.ResetMaterial();
 		}
 
 		void Teleport()
@@ -124,51 +106,41 @@ namespace PracticeMod
 			teleportRotation = t.eulerAngles.y;
 		}
 
-		public static void SetInfectedSpeed()
+		internal static void SetInfectedSpeed()
 		{
 			if (Allowed)
 			{
-				Player.Instance.maxJumpSpeed = GorillaTagManager.instance.fastJumpLimit;
-				Player.Instance.jumpMultiplier = GorillaTagManager.instance.fastJumpMultiplier;
-				SetMat(1);
+				MovementSpeedPatch.SetSpeed(GorillaGameManager.instance.fastJumpLimit, GorillaGameManager.instance.fastJumpMultiplier);
+				MaterialIndexPatch.SetMaterial(InfectedMaterialIndex);
 			}
 		}
 
-		public static void SetSurvivorSpeed()
+		internal static void SetSurvivorSpeed()
 		{
 			if (Allowed)
 			{
-				Player.Instance.maxJumpSpeed = GorillaTagManager.instance.slowJumpLimit;
-				Player.Instance.jumpMultiplier = GorillaTagManager.instance.slowJumpMultiplier;
-				SetMat(0);
+				MovementSpeedPatch.SetSpeed(GorillaGameManager.instance.slowJumpLimit, GorillaGameManager.instance.slowJumpMultiplier);
+				MaterialIndexPatch.SetMaterial(SurvivorMaterialIndex);
 			}
 		}
 
-		public static void SetSpecificSpeed(int playerCount, int infectedCount, bool infected)
+		internal static void SetSpecificSpeed(int playerCount, int infectedCount, bool infected)
 		{
 			if (Allowed)
 			{
 				float percentage = infected ? (playerCount - infectedCount) : (infectedCount - 1) * 0.9f;
 				percentage /= (float)(playerCount - 1);
 
-				float fastJumpMultiplier = GorillaTagManager.instance.fastJumpMultiplier;
-				float slowJumpMultiplier = GorillaTagManager.instance.slowJumpMultiplier;
-				float fastJumpLimit = GorillaTagManager.instance.fastJumpLimit;
-				float slowJumpLimit = GorillaTagManager.instance.slowJumpLimit;
+				float fastJumpLimit = GorillaGameManager.instance.fastJumpLimit;
+				float slowJumpLimit = GorillaGameManager.instance.slowJumpLimit;
+				float fastJumpMultiplier = GorillaGameManager.instance.fastJumpMultiplier;
+				float slowJumpMultiplier = GorillaGameManager.instance.slowJumpMultiplier;
 
-				float computedJumpMultiplier = (fastJumpMultiplier - slowJumpMultiplier) * percentage + slowJumpMultiplier;
 				float computedJumpLimit = (fastJumpLimit - slowJumpLimit) * percentage + slowJumpLimit;
+				float computedJumpMultiplier = (fastJumpMultiplier - slowJumpMultiplier) * percentage + slowJumpMultiplier;
 
-				Player.Instance.jumpMultiplier = computedJumpMultiplier;
-				Player.Instance.maxJumpSpeed = computedJumpLimit;
+				MovementSpeedPatch.SetSpeed(computedJumpLimit, computedJumpMultiplier);
 			}
-		}
-
-		static void SetMat(int index)
-		{
-			ExitGames.Client.Photon.Hashtable hashtable = new ExitGames.Client.Photon.Hashtable();
-			hashtable.Add("matIndex", index);
-			PhotonNetwork.LocalPlayer.SetCustomProperties(hashtable);
 		}
 	}
 }

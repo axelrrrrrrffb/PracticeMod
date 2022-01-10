@@ -6,7 +6,7 @@ using HarmonyLib;
 using System.Reflection;
 using UnityEngine;
 
-namespace PracticeMod
+namespace PracticeMod.Patches
 {
 	[HarmonyPatch(typeof(Player))]
 	[HarmonyPatch("Update", MethodType.Normal)]
