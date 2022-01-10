@@ -8,6 +8,6 @@ namespace PracticeMod
 	{
 		public const string GUID = "io.github.graicc.gorillatag.practicemod";
 		public const string Name = "Practice Mod";
-		public const string Version = "1.1.0";
+		public const string Version = "1.1.1";
 	}
 }
