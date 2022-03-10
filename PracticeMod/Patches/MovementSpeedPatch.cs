@@ -7,7 +7,7 @@ using GorillaLocomotion;
 namespace PracticeMod.Patches
 {
 	[HarmonyPatch(typeof(Player))]
-	[HarmonyPatch("Update", MethodType.Normal)]
+	[HarmonyPatch("LateUpdate", MethodType.Normal)]
 	internal class MovementSpeedPatch
 	{
 		public static bool ShouldOverride { get; private set; }
